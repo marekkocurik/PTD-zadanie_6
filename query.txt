@@ -1,0 +1,74 @@
+Uloha 2:
+
+MATCH (a:Account)<-[f:FOLLOWS]-(b:Account) RETURN a.id, a.screen_name, COUNT(f)
+ORDER BY COUNT(f) DESC LIMIT 5
+
+
+Uloha 3:
+
+MATCH (perry:Account {screen_name: 'katyperry'}),
+(kim:Account {screen_name: 'KimKardashian'}),
+paths = allShortestPaths((perry)-[:FOLLOWS*]-(kim))
+RETURN paths
+
+
+Uloha 4:
+
+CALL
+{
+    MATCH (a:Account)-[p:POSTS]->(t:Tweet)<-[r:RETWEETS]-()
+    RETURN a, COUNT(r) as rCount ORDER BY rCount DESC LIMIT 10
+}
+MATCH (a)-[p:POSTS]->(t:Tweet)<-[r:RETWEETS]-()
+RETURN a.screen_name, t.id, COUNT(r) as rCount ORDER BY rCount
+LIMIT 10
+
+
+Uloha 5:
+
+CALL
+{
+    MATCH (a:Account {screen_name: 'realDonaldTrump'})-[:POSTS]->(t:Tweet)<-[r:RETWEETS]-()
+    WITH COUNT(r) as rCount, a, t
+    RETURN a, t
+    ORDER BY rCount DESC
+    LIMIT 1
+}
+CREATE (acc:Account {name: 'Marek Kocurik'})-[f:FOLLOWS]->(a), (acc)-[p:POSTS]->(tw:Tweet {content: 'new content'})<-[r:RETWEETS]-(t)
+RETURN acc, f, tw, r
+
+
+Uloha 6:
+
+MATCH (a:Account {screen_name: '777stl'})-[f1:FOLLOWS]->(accs:Account)
+MATCH (b:Account)-[f2:FOLLOWS]->(accs)
+WITH COUNT(f2) as fCount, a, b
+WHERE NOT (a)-[:FOLLOWS]->(b) AND NOT a = b
+RETURN b.name
+ORDER BY fCount DESC
+LIMIT 10
+
+
+Uloha 7:
+
+MATCH (a:Account {screen_name: 'DaynerWilson'})-[:POSTS]-(:Tweet)-[:RETWEETS]->(:Tweet)-[r:RETWEETS*]-(:Tweet)-[:POSTS]-(b:Account)
+WITH COUNT(r) as rCount, b
+RETURN b.screen_name, rCount
+ORDER BY rCount DESC
+LIMIT 10
+
+
+Uloha 8:
+
+CALL
+{
+    MATCH (a:Account)-[:POSTS]->(t:Tweet {id: "1289380305728503808"})
+    MATCH (b:Account)-[:FOLLOWS*0..4]->(a)
+    MATCH (b)-[:POSTS]->(x:Tweet)
+    WHERE NOT (x)-[:RETWEETS]->(t)
+    RETURN x as tw, split(x.content, " ") as spl
+}
+MATCH ((a:Account)-[:POSTS]->(t:Tweet {id: "1289380305728503808"}))
+RETURN tw, size(apoc.coll.intersection(split(t.content, " "), spl)) as cnt
+ORDER BY cnt DESC
+LIMIT 5
